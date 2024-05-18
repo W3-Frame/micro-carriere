@@ -15,7 +15,7 @@ useHead({
       label="Home"
       to="/"
       color="black"
-      class="absolute top-4"
+      class="absolute top-4 rounded-full p-2"
     />
 
     <slot />
