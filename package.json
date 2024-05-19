@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "cypress:open": "cypress open",
+    "test:e2e:headful:cypress": "cypress run --browser chrome --headed"
   },
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.21",
