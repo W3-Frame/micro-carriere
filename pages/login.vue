@@ -1,13 +1,46 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from "#ui/types";
+import { useFirebase } from "~/composables/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import {
+  GoogleAuthProvider,
+  getAdditionalUserInfo,
+  signInWithPopup,
+} from "firebase/auth";
+
 definePageMeta({
   layout: "auth",
 });
+
+console.log("Login page");
 
 useSeoMeta({
   title: "Login",
 });
 
+const { auth, db } = useFirebase();
+const { isAuthenticated, user } = useAuth(auth);
+
+watch(
+  isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      console.log("You are authenticated");
+      navigateTo("/");
+    }
+  },
+  { immediate: true }
+);
+const signIn = () =>
+  signInWithPopup(auth, new GoogleAuthProvider()).then(async (result) => {
+    const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
+    const { email, displayName, photoURL, uid } = result.user;
+
+    if (isNewUser) {
+      await setDoc(doc(db, "users", uid), { email, displayName, photoURL });
+    }
+    navigateTo("/");
+  });
 const fields = [
   {
     name: "email",
@@ -52,8 +85,6 @@ function onSubmit(data: any) {
 }
 </script>
 
-<!-- eslint-disable vue/multiline-html-element-content-newline -->
-<!-- eslint-disable vue/singleline-html-element-content-newline -->
 <template>
   <UCard class="max-w-sm w-full bg-white/75 dark:bg-white/5 backdrop-blur">
     <!-- Header -->
@@ -75,7 +106,7 @@ function onSubmit(data: any) {
     <!-- Content -->
     <div class="flex flex-col gap-y-6">
       <UForm
-        :schema="schema"
+        :validate="validate"
         :state="state"
         class="space-y-6"
         @submit="onSubmit"
@@ -102,9 +133,7 @@ function onSubmit(data: any) {
           class="w-full rounded-full text-center flex justify-center gap-x-2"
         >
           <span>Continue</span>
-          <UIcon
-            name="i-heroicons-arrow-right-20-solid"
-            class="flex-shrink-0"
+          <UIcon name="i-heroicons-arrow-right-20-solid" class="flex-shrink-0"
         /></UButton>
       </UForm>
       <div class="flex items-center align-center text-center w-full flex-row">
@@ -126,7 +155,8 @@ function onSubmit(data: any) {
           type="submit"
           color="white"
           size="lg"
-          class="w-full h-8  rounded-full text-center flex justify-center gap-x-2"
+          class="w-full h-8 rounded-full text-center flex justify-center gap-x-2"
+          @click="signIn()"
         >
           <UIcon name="i-simple-icons-google" class="flex-shrink-0 h-5 w-5" />
           <span>Continue With Google</span></UButton
