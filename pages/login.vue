@@ -5,6 +5,7 @@ import { doc, setDoc } from "firebase/firestore";
 import {
   GoogleAuthProvider,
   getAdditionalUserInfo,
+  signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
 
@@ -31,6 +32,21 @@ watch(
   },
   { immediate: true }
 );
+const signInV2 = () => {
+  if (!state.email || !state.password)
+    return console.log("Email and password are required");
+  signInWithEmailAndPassword(auth, state.email, state.password).then(
+    async (result) => {
+      const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
+      const { email, displayName, photoURL, uid } = result.user;
+
+      if (isNewUser) {
+        await setDoc(doc(db, "users", uid), { email, displayName, photoURL });
+      }
+      navigateTo("/");
+    }
+  );
+};
 const signIn = () =>
   signInWithPopup(auth, new GoogleAuthProvider()).then(async (result) => {
     const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
@@ -41,6 +57,7 @@ const signIn = () =>
     }
     navigateTo("/");
   });
+
 const fields = [
   {
     name: "email",
@@ -158,7 +175,10 @@ function onSubmit(data: any) {
           class="w-full h-8 rounded-full text-center flex justify-center gap-x-2"
           @click="signIn()"
         >
-          <UIcon name="i-simple-icons-google" class="flex-shrink-0 h-5 w-5" />
+          <UIcon
+            name="i-simple-icons-google"
+            class="flex-shrink-0 h-5 w-5 text-red-500"
+          />
           <span>Continue With Google</span></UButton
         >
       </div>
